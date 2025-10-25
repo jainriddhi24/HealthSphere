@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String
+  dateOfBirth DateTime
+  gender      String
+  role        String   @default("user")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  healthMetrics HealthMetrics[]
+  workouts      WorkoutProgress[]
+  meals         Meal[]
+  chatMessages  ChatMessage[]
+
+  @@map("users")
+}
+
+model HealthMetrics {
+  id             String   @id @default(cuid())
+  userId         String
+  date           DateTime
+  weight         Float
+  bloodPressure  Int
+  heartRate      Int
+  sleepHours     Float
+  steps          Int
+  caloriesBurned Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("health_metrics")
+}
+
+model Workout {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // cardio, strength, flexibility, balance
+  duration    Int      // in minutes
+  difficulty  String   // beginner, intermediate, advanced
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  exercises Exercise[]
+  progress  WorkoutProgress[]
+
+  @@map("workouts")
+}
+
+model Exercise {
+  id        String  @id @default(cuid())
+  workoutId String
+  name      String
+  sets      Int?
+  reps      Int?
+  duration  Int?    // in seconds
+  restTime  Int?    // in seconds
+  createdAt DateTime @default(now())
+
+  // Relations
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@map("exercises")
+}
+
+model WorkoutProgress {
+  id           String   @id @default(cuid())
+  workoutId    String
+  userId       String
+  duration     Int?     // actual duration in minutes
+  caloriesBurned Int?
+  notes        String?
+  completedAt  DateTime @default(now())
+
+  // Relations
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("workout_progress")
+}
+
+model Meal {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  calories  Int
+  protein   Float
+  carbs     Float
+  fat       Float
+  imageUrl  String?
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("meals")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  isUser    Boolean
+  timestamp DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
